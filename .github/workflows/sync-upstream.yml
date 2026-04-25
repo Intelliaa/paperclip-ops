@@ -1,0 +1,66 @@
+name: Sync upstream
+
+on:
+  schedule:
+    # Mondays 06:00 UTC = 01:00 ECT
+    - cron: '0 6 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream + fetch
+        run: |
+          git remote add upstream https://github.com/paperclipai/paperclip.git
+          git fetch upstream
+
+      - name: Check distance from upstream
+        id: check
+        run: |
+          BEHIND=$(git rev-list --count master..upstream/master)
+          echo "behind=$BEHIND" >> $GITHUB_OUTPUT
+          echo "Fork is $BEHIND commits behind upstream"
+
+      - name: Open sync PR if behind
+        if: steps.check.outputs.behind != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          BRANCH="sync-upstream-${DATE}"
+
+          # If branch already exists from a previous run, skip
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
+            echo "Branch $BRANCH already exists on origin, skipping"
+            exit 0
+          fi
+
+          git checkout -b "$BRANCH"
+          git merge upstream/master --no-edit
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --base master \
+            --head "$BRANCH" \
+            --title "chore: sync upstream paperclipai/paperclip ($DATE)" \
+            --body "Auto-generated weekly sync from upstream paperclipai/paperclip:master.
+
+          **Behind by:** ${{ steps.check.outputs.behind }} commit(s)
+
+          Review changes and merge if all looks good. After merging, redeploy via Dokploy if there are server/runtime changes that affect the running instance."
