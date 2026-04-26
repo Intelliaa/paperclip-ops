@@ -54,9 +54,10 @@ RUN npm install --global --omit=dev @anthropic-ai/claude-code@latest @openai/cod
   && apt-get update \
   && apt-get install -y --no-install-recommends openssh-client jq \
   && rm -rf /var/lib/apt/lists/* \
+  && git clone --depth 1 https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
   && python3 -m venv /opt/hermes-venv \
   && /opt/hermes-venv/bin/pip install --no-cache-dir --upgrade pip \
-  && /opt/hermes-venv/bin/pip install --no-cache-dir hermes-agent \
+  && /opt/hermes-venv/bin/pip install --no-cache-dir -e /opt/hermes-agent \
   && ln -s /opt/hermes-venv/bin/hermes /usr/local/bin/hermes \
   && mkdir -p /paperclip \
   && chown node:node /paperclip
