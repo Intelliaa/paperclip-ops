@@ -34,6 +34,12 @@ if [ ! -f "$HERMES_CONFIG_PATH" ] && [ -f "$HERMES_DEFAULT_CONFIG" ]; then
     echo "Seeding Hermes config at $HERMES_CONFIG_PATH"
     mkdir -p "$HERMES_HOME_DIR"
     cp "$HERMES_DEFAULT_CONFIG" "$HERMES_CONFIG_PATH"
+fi
+
+# Always ensure node owns HERMES_HOME — Hermes creates files (logs, sessions,
+# memories, SOUL.md) on first invocation; if anything created them as root they
+# block subsequent runs as the node user with PermissionError.
+if [ -d "$HERMES_HOME_DIR" ]; then
     chown -R node:node "$HERMES_HOME_DIR"
 fi
 
