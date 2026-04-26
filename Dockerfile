@@ -3,7 +3,7 @@ FROM node:lts-trixie-slim AS base
 ARG USER_UID=1000
 ARG USER_GID=1000
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates gosu curl gh git wget ripgrep python3 \
+  && apt-get install -y --no-install-recommends ca-certificates gosu curl gh git wget ripgrep python3 python3-venv python3-pip \
   && rm -rf /var/lib/apt/lists/* \
   && corepack enable
 
@@ -54,6 +54,10 @@ RUN npm install --global --omit=dev @anthropic-ai/claude-code@latest @openai/cod
   && apt-get update \
   && apt-get install -y --no-install-recommends openssh-client jq \
   && rm -rf /var/lib/apt/lists/* \
+  && python3 -m venv /opt/hermes-venv \
+  && /opt/hermes-venv/bin/pip install --no-cache-dir --upgrade pip \
+  && /opt/hermes-venv/bin/pip install --no-cache-dir hermes-agent \
+  && ln -s /opt/hermes-venv/bin/hermes /usr/local/bin/hermes \
   && mkdir -p /paperclip \
   && chown node:node /paperclip
 
@@ -72,7 +76,9 @@ ENV NODE_ENV=production \
   PAPERCLIP_CONFIG=/paperclip/instances/default/config.json \
   PAPERCLIP_DEPLOYMENT_MODE=authenticated \
   PAPERCLIP_DEPLOYMENT_EXPOSURE=private \
-  OPENCODE_ALLOW_ALL_MODELS=true
+  OPENCODE_ALLOW_ALL_MODELS=true \
+  HERMES_HOME=/paperclip/.hermes \
+  PATH=/opt/hermes-venv/bin:${PATH}
 
 VOLUME ["/paperclip"]
 EXPOSE 3100
