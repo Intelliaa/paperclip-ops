@@ -1,0 +1,29 @@
+model:
+  default: kimi-k2.6
+  provider: auto
+  base_url: https://opencode.ai/zen/go/v1
+providers: {}
+fallback_providers: []
+toolsets:
+  - hermes-cli
+agent:
+  max_turns: 60
+  gateway_timeout: 1800
+  restart_drain_timeout: 60
+  api_max_retries: 3
+  tool_use_enforcement: auto
+  reasoning_effort: medium
+  verbose: false
+terminal:
+  backend: local
+  cwd: .
+  timeout: 180
+  persistent_shell: true
+  lifetime_seconds: 300
+checkpoints:
+  enabled: true
+  max_snapshots: 50
+file_read_max_chars: 100000
+tool_output:
+  max_bytes: 50000
+  max_lines: 2000
